@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dos_años.exe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+
+/* ============================================================
+   EDITA AQUÍ ARRIBA — variables de contenido en el <script> más abajo.
+   No necesitas tocar nada de este bloque de estilos.
+   ============================================================
+*/
+
+:root{
+  --ink: #10131b;
+  --ink-soft: #1b2029;
+  --ink-line: #2a3140;
+  --teal: #a9d0c8;
+  --teal-dim: #7fa89f;
+  --rose: #e0959b;
+  --gold: #e6c17e;
+  --paper: #f6efe3;
+  --paper-line: #ddcfb2;
+  --paper-ink: #241d18;
+  --mono: 'JetBrains Mono', monospace;
+  --serif: 'Fraunces', serif;
+  --warmth: 0; /* 0 = frío/terminal, 1 = cálido/papel — solo controla acentos decorativos */
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  font-family: var(--mono);
+  background: var(--ink);
+  color: var(--teal);
+  transition: background 1s ease, color 1s ease;
+  overflow-x: hidden;
+  min-height: 100%;
+}
+body.theme-warm{
+  background: var(--paper);
+  color: var(--paper-ink);
+}
+
+.stage{
+  min-height: 100vh;
+  min-height: 100dvh; /* evita el bug de la barra de direcciones en móvil */
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding: 6vh 6vw;
+  position: relative;
+}
+.hidden{ display:none !important; }
+
+@keyframes stageIn{
+  from{ opacity:0; transform: translateY(10px); }
+  to{ opacity:1; transform: translateY(0); }
+}
+.stage:not(.hidden){
+  animation: stageIn .7s cubic-bezier(.2,.8,.2,1);
+}
+
+@media (prefers-reduced-motion: reduce){
+  .stage:not(.hidden){ animation: none; }
+  #boot .cursor{ animation: none; opacity: 1; }
+}
+
+/* ---------- accesibilidad: foco visible ---------- */
+.btn:focus-visible,
+.hint-toggle:focus-visible,
+input[type=text]:focus-visible,
+.tile:focus-visible{
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+/* ---------- progreso ---------- */
+.progressbar{
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--ink-line);
+  z-index: 50;
+}
+.progressbar-fill{
+  height:100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--teal), var(--gold), var(--rose));
+  transition: width .6s ease;
+}
+.progress-label{
+  position: fixed;
+  top: 12px; right: 18px;
+  font-size: 11px;
+  letter-spacing: .05em;
+  opacity: .7;
+  z-index: 50;
+}
+
+/* ---------- etapa 0: boot (optimizado para laptop) ---------- */
+#boot .term{
+  width: min(900px, 92vw);  /* <- Ajusta el ANCHO a tu gusto (ej: 700px, 800px, 900px) */
+  min-height: 260px;        /* <- Mantiene un ALTO fijo para que la caja no brinque mientras escribe */
+  border: 1px solid var(--ink-line);
+  border-radius: 8px;
+  padding: 34px 32px;
+  background: rgba(255,255,255,0.03);
+  box-shadow: 0 30px 80px -40px rgba(0,0,0,.6);
+}
+#boot .line{
+  font-size: 14px;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+#boot .cursor{
+  display:inline-block;
+  width:8px; height:16px;
+  background: var(--teal);
+  margin-left:2px;
+  vertical-align: middle;
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink{50%{opacity:0;}}
+.btn{
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: .04em;
+  background: transparent;
+  border: 1px solid var(--teal);
+  color: var(--teal);
+  padding: 12px 22px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all .2s ease;
+  margin-top: 22px;
+}
+.btn:hover{ background: var(--teal); color: var(--ink); }
+.btn:disabled{ opacity:.35; cursor:not-allowed; }
+.btn:disabled:hover{ background:transparent; color:var(--teal); }
+.warm .btn{ border-color: var(--rose); color: var(--rose); }
+.warm .btn:hover{ background: var(--rose); color: var(--paper); }
+
+/* botón especial — usado en el easter egg de "solucionar" */
+.btn-highlight{
+  background: var(--rose);
+  color: var(--ink);
+  border: none;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 13px 26px;
+  box-shadow: 0 6px 20px -4px rgba(224,149,155,0.5);
+}
+.btn-highlight:hover{ background: var(--gold); color: var(--ink); }
+
+/* ---------- etapa 1: cifrado ---------- */
+#cipher .box{
+  width: min(560px, 90vw);
+  text-align:center;
+}
+.eyebrow{
+  font-size: 11px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  opacity: .6;
+  margin-bottom: 18px;
+}
+.encoded{
+  font-size: clamp(20px, 4vw, 30px);
+  letter-spacing: .06em;
+  border: 1px dashed var(--ink-line);
+  border-radius: 8px;
+  padding: 24px 20px;
+  margin-bottom: 22px;
+  word-break: break-word;
+}
+.answer-row{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap: wrap;
+}
+input[type=text]{
+  font-family: var(--mono);
+  font-size: 14px;
+  background: transparent;
+  border: 1px solid var(--ink-line);
+  color: inherit;
+  padding: 12px 14px;
+  border-radius: 5px;
+  min-width: 260px;
+}
+input[type=text]:focus{ outline: 1px solid var(--teal); }
+.feedback{
+  min-height: 20px;
+  font-size: 13px;
+  margin-top: 14px;
+  opacity: .85;
+  transition: color .3s ease, font-size .3s ease, opacity .3s ease;
+}
+.feedback.feedback-celebrate{
+  color: #ffffff;
+  font-size: 21px;
+  font-weight: 700;
+  opacity: 1;
+  line-height: 1.5;
+  text-shadow: 0 2px 10px rgba(0,0,0,.55);
+}
+.hint-toggle{
+  background:none; border:none; color: var(--gold);
+  font-family: var(--mono); font-size: 12px;
+  text-decoration: underline; cursor: pointer;
+  margin-top: 16px;
+}
+
+/* ---------- etapa 2: puzzle deslizante ---------- */
+#slider .box{ text-align:center; }
+.puzzle-grid{
+  display:grid;
+  gap: 4px;
+  width: min(480px, 88vw, 60vh);
+  width: min(480px, 88vw, 60dvh);
+  aspect-ratio: 1;
+  margin: 0 auto 22px;
+  border: 1px solid var(--ink-line);
+  padding: 5px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+}
+.tile{
+  border-radius: 5px;
+  display:flex; align-items:center; justify-content:center;
+  cursor: pointer;
+  background-repeat: no-repeat;
+  transition: transform .15s ease;
+}
+.tile:hover{ transform: scale(0.96); }
+.tile.empty{ background: transparent !important; cursor: default; }
+.tile.empty:hover{ transform:none; }
+
+.puzzle-guide-box{
+  margin-top: 18px;
+  text-align: center;
+}
+#puzzleGuideImg{
+  max-width: 260px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--ink-line);
+  box-shadow: 0 10px 28px -8px rgba(0,0,0,.4);
+}
+
+/* ---------- etapa 3: constelación ---------- */
+#constellation{ padding-top: 4vh; }
+#constellation .canvas-wrap{
+  position: relative;
+  /* el ancho queda acotado por 3 techos a la vez: tamaño ideal, ancho de
+     pantalla, y alto de pantalla (convertido a ancho vía la razón 3:2) —
+     así nunca se deforma, solo se achica proporcionalmente */
+  width: min(720px, 92vw, 87vh);
+  width: min(720px, 92vw, 87dvh);
+  aspect-ratio: 3 / 2;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--ink-line);
+  box-shadow: 0 0 60px -20px rgba(169,208,200,0.35), inset 0 0 80px rgba(0,0,0,0.35);
+}
+#constellation canvas{
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: default;
+}
+.memory-card{
+  position: fixed;
+  inset: 0;
+  background: rgba(10,12,17,.82);
+  backdrop-filter: blur(6px);
+  display:flex; align-items:center; justify-content:center;
+  z-index: 60;
+  padding: 4vh 4vw;
+  animation: fadeIn .35s ease;
+}
+@keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+@keyframes panelIn{ from{opacity:0; transform: scale(.94) translateY(10px);} to{opacity:1; transform:scale(1) translateY(0);} }
+.memory-card .panel{
+  width: min(500px, 90vw);
+  max-height: 88vh;
+  max-height: 88dvh;
+  overflow-y: auto;
+  background: var(--ink-soft);
+  color: var(--teal);
+  border: 1px solid var(--ink-line);
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  animation: panelIn .35s cubic-bezier(.2,.8,.3,1);
+  box-shadow: 0 24px 70px -20px rgba(0,0,0,.6);
+}
+.memory-card .photo{
+  width:100%; aspect-ratio: 4/3;
+  border-radius: 8px;
+  margin-bottom:18px;
+  background: linear-gradient(135deg, var(--teal), var(--ink-soft));
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; opacity:.7;
+  overflow: hidden;
+}
+.memory-card .photo img{ width:100%; height:100%; object-fit:cover; border-radius:8px; }
+.memory-card #memoryText{
+  font-size: 15px;
+  line-height: 1.75;
+}
+.constellation-counter{
+  font-size: 12px;
+  opacity: .65;
+  margin-top: 16px;
+}
+
+/* ---------- etapa 4: final cálido ---------- */
+#final{
+  background: transparent;
+}
+#final .eyebrow{ opacity: .55; }
+#final .headline{
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(28px, 6vw, 52px);
+  text-align:center;
+  width: 92vw;
+  max-width: 760px;
+  line-height: 1.3;
+  margin-bottom: 34px;
+}
+.gallery{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: 16px;
+  width: min(900px, 92vw);
+  margin-bottom: 34px;
+}
+.gallery .frame{
+  aspect-ratio: 1;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--rose), var(--gold));
+  display:flex; align-items:center; justify-content:center;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+  opacity: .85;
+  overflow: hidden;
+  box-shadow: 0 10px 30px -14px rgba(0,0,0,.35);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.gallery .frame:hover{
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 16px 36px -14px rgba(0,0,0,.4);
+}
+.gallery img{ width:100%; height:100%; object-fit: cover; }
+.letter{
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.85;
+  max-width: 640px;
+  width: 92vw;
+  text-align: left;
+  white-space: pre-wrap;
+  border-top: 1px solid var(--paper-line);
+  padding-top: 26px;
+}
+.signature{
+  margin-top: 22px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 18px;
+  align-self: flex-end;
+  max-width: 640px;
+  width: 92vw;
+  text-align: right;
+}
+
+/* ---------- responsive: ventanas o pantallas más angostas ---------- */
+@media (max-width: 640px){
+  .stage{ padding: 5vh 5vw; }
+  #boot .term{ padding: 26px 20px; min-height: 220px; }
+  .encoded{ padding: 18px 14px; }
+  input[type=text]{ min-width: 0; width: 100%; }
+  .answer-row{ flex-direction: column; }
+  .memory-card .panel{ padding: 24px; }
+  .memory-card{ padding: 4vh 4vw; }
+  .gallery{ grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+  /* un párrafo largo con emojis se lee mejor alineado a la izquierda
+     que en bandera derecha cuando ocupa varias líneas */
+  .signature{ text-align: left; }
+  .letter{ font-size: 15.5px; }
+}
+
+@media (max-width: 400px){
+  .stage{ padding: 4vh 4vw; }
+  #boot .term{ padding: 20px 16px; min-height: 200px; }
+  #boot .line{ font-size: 13px; }
+  .puzzle-grid{ gap: 3px; padding: 4px; }
+  #puzzleGuideImg{ max-width: 200px; }
+  .headline{ line-height: 1.25; }
+}
+</style>
+</head>
+<body>
+
+<div class="progressbar"><div class="progressbar-fill" id="progressFill"></div></div>
+<div class="progress-label" id="progressLabel">sistema: 0%</div>
+
+<!-- ============ ETAPA 0: BOOT ============ -->
+<section class="stage" id="boot">
+  <div class="term">
+    <div class="line" id="bootLines"></div>
+    <button class="btn hidden" id="startBtn">iniciar →</button>
+  </div>
+</section>
+
+<!-- ============ ETAPA 1: CIFRADO ============ -->
+<section class="stage hidden" id="cipher">
+  <div class="box">
+    <div class="eyebrow">etapa 1 / 3 — descifra el mensaje</div>
+    <div class="encoded" id="encodedText"></div>
+    <div class="answer-row">
+      <input type="text" id="answerInput" placeholder="escribe la frase descifrada...">
+      <button class="btn" id="checkBtn">Verificar</button>
+    </div>
+    <div class="feedback" id="cipherFeedback"></div>
+    <button class="hint-toggle" id="hintBtn">Mostrar pista</button>
+  </div>
+</section>
+
+<!-- ============ ETAPA 2: PUZZLE DESLIZANTE ============ -->
+<section class="stage hidden" id="slider">
+  <div class="box">
+    <div class="eyebrow">etapa 2 / 3 — ordena los fragmentos</div>
+    <div class="feedback" id="sliderFeedback">Haz clic en las piezas para moverlas hacia el espacio vacío</div>
+
+    <!-- Botón de solucionar: aparece tras usar la ayuda por un tiempo -->
+    <button class="btn btn-highlight hidden" id="solveBtn" style="margin-bottom: 20px;">solucionar automáticamente</button>
+
+    <div class="puzzle-grid" id="puzzleGrid"></div>
+
+    <!-- Botón de ayuda y contenedor de la imagen guía -->
+    <button class="hint-toggle hidden" id="puzzleHelpBtn">Mostrar imagen guía</button>
+    <div id="puzzleGuideBox" class="hidden puzzle-guide-box">
+      <img id="puzzleGuideImg" src="" alt="imagen guía del rompecabezas">
+    </div>
+  </div>
+</section>
+
+<!-- ============ ETAPA 3: CONSTELACIÓN ============ -->
+<section class="stage hidden" id="constellation">
+  <div class="eyebrow">etapa 3 / 3 — recorre la constelación</div>
+  <div class="canvas-wrap"><canvas id="constellationCanvas" width="720" height="480"></canvas></div>
+  <div class="constellation-counter" id="constCounter">0 / 0 recuerdos abiertos</div>
+  <button class="btn hidden" id="finishBtn">Continuar →</button>
+</section>
+
+<!-- Card modal de recuerdo -->
+<div class="memory-card hidden" id="memoryCard">
+  <div class="panel">
+    <div class="photo" id="memoryPhoto">[ foto aquí ]</div>
+    <div id="memoryText"></div>
+    <button class="btn" id="closeMemory" style="margin-top:18px;">cerrar</button>
+  </div>
+</div>
+
+<!-- ============ ETAPA 4: FINAL CÁLIDO ============ -->
+<section class="stage hidden warm" id="final">
+  <div class="eyebrow">Sistema: 100% — Amoroso y en línea</div>
+  <div class="headline" id="finalHeadline"></div>
+  <div class="gallery" id="finalGallery"></div>
+  <div class="letter" id="finalLetter"></div>
+  <div class="signature" id="finalSignature"></div>
+</section>
+
+
+<script>
+/* ============================================================
+   ZONA DE EDICIÓN — todo lo que David debe personalizar vive aquí.
+   No necesitas tocar el resto del archivo para llenarlo de contenido.
+   ============================================================ */
+
+const CONTENT = {
+
+  // --- Etapa 0: líneas del "boot" (se escriben como máquina de escribir) ---
+  bootLines: [
+    "$ Iniciando dos_años_juntos.exe",
+    "Verificando compatibilidad...5%...10%...20%...50%...90%...80%...75%...80%...100%...110%...1000%",
+    "Cargando nuestros recuerdos más especiales....................... Cargados [OK]",
+    "Detectando si hay una preciosura mirando la pantalla....... Mamacita detectada [OK]",
+    "Bueeenooo... Si aún quieres ser mi novia y vivir muchas experiencias llenas de amor y cariño, entonces presiona iniciar para continuar."
+  ],
+
+  // --- Etapa 1: cifrado César. Cambia 'phrase' y 'shift' (1-25) ---
+  cipher: {
+    phrase: "siempre seras mi culicagadita preciosa y corazoncito de melocoton",   // <- EDITA: la frase real (todo minúsculas, sin tildes)
+    shift: 3,                              // <- EDITA: qué tanto se recorre el alfabeto
+    hint: "pista: Emperador Romano"
+  },
+
+  // --- Etapa 2: puzzle deslizante. Arma una foto ---
+  slider: {
+    size: 4,                      // <- EDITA: tamaño del lado (4 = grid de 4x4, 16 piezas; 5 = grid de 5x5, 25 piezas)
+    // pon aquí la ruta de la foto que se va a armar (ej: "fotos/nosotros.jpg")
+    imageUrl: "foto1.jpeg",
+    // si imageUrl queda en null, se usa un degradado de estos colores como "foto" de relleno
+    fallbackGradient: ["#a9d0c8", "#e6c17e", "#e0959b"]
+  },
+
+  // --- Etapa 3: constelación de recuerdos. Agrega/quita los que quieras ---
+  memories: [
+    { label: "El inicio", photo: "foto2.jpeg", text: "Nuestra historia comenzó exactamente este día y se reforzó el día que te regalé el collar que tan cuidadosamente elegí para ti y ahora llevas en tu hermoso cuello. Jamás olvidaré tu expresión y tus palabras, me hicieron sentir tan feliz, como no lo puedes imaginar" },
+    { label: "El gran viaje", photo: "foto3.jpeg", text: "Aquí te propuse de manera oficial que fueramos novios, pero para mi, ya lo eramos desde hacia mucho y te respetaba tal cual como mi noviecita preciosa" },
+    { label: "Una declaración", photo: "foto4.jpeg", text: "Tu eres mi 127.0.0.1, donde mi corazoncito y mi alma se sienten en paz y felices"  },
+    { label: "Una confesión", photo: "foto5.jpeg", text: "No importa cuan duro sea el camino, siempre tengo la predisposición de superarlo contigo a mi lado" },
+    { label: "Hoy", photo: "foto6.jpeg", text: "Te elijo y seguiré eligiendo cada día porque contigo todo es colorido, todo es iluminado, tu sonrisa me llena el alma, tus ojos encienden mi deseo, tu mente cautiva a la mía y tu ser entero me invita a amarte con una locura indescriptible!!!" }
+  ],
+
+// --- Etapa 4: el cierre cálido ---
+  final: {
+    headline: "Dos años compilando nuestra historia,\ny cada versión resulta mejor que la anterior.",
+    // pon rutas de fotos reales aquí, ej: ["fotos/uno.jpg","fotos/dos.jpg"] — si se deja vacío, se muestran marcos vacíos
+    gallery: ["foto7.jpeg", "foto8.jpeg", "foto9.jpeg", "foto10.jpeg", "foto11.jpeg", "foto12.jpeg", "foto13.jpeg", "foto14.jpeg", "foto15.jpeg", "foto16.jpeg", "foto17.jpeg", "foto18.jpeg"],
+    letter: `Amorcito mío, mi dulce corazoncito de melocotón 🌹🌹🌹. Hoy cumplimos dos años juntos... Dos años, mi amorrrrsoooteeeeee! 😍😍😍😍😍. Parece increíble cómo ha pasado el tiempo, y al mismo tiempo siento que esto apenas comienza, que aún nos queda tanto por vivir, por construir y por disfrutar juntos. No quería que este día pasara sin que supieras todo lo que significas para mí, y sé que ya te lo he dicho muchas veces, pero hoy quiero decírtelo de una manera aún más especial 🥰🥰🥰.
+
+Recuerdo cuando te conocí, esa chica tan reservada y seria que parecía no tener muchas ganas de conocer a nadie... Quién iba a pensar que esa persona se convertiría en mi mundo entero, en la mujer que me enseñó lo que es el amor verdadero, el amor que se construye con paciencia, con esfuerzo y con una sinceridad demasiado bonita ❤️❤️❤️. Estos dos años no han sido perfectos, y no voy a pretender que lo fueron. Hemos tenido momentos muy buenos, esos que atesoró en el corazón para siempre... Pero también hemos tenido nuestros altibajos, discusiones, días difíciles donde las palabras no salieron como queríamos. Y aun así, aquí estamos, juntos, más fuertes que antes, porque cada vez que hemos caído hemos tenido las ganas de levantarnos de nuevo, pero juntos 🌹🌹🌹. Eso, mi tesorito valioso, es lo que hace que esto sea real.
+
+Sé que no soy perfecto, y sé que aún tengo cosas por mejorar. A veces no digo lo que siento como debería, a veces me cierro cuando estoy pasando por algo. Pero quiero que sepas que estoy aprendiendo, que cada día me esfuerzo por ser mejor, no solo por mí, sino por nosotros, por ese futuro tan bonito que estamos soñando ❤️❤️❤️. Porque sí, mi princesita hermosa, yo tengo ese futuro muy claro en mi mente. Quiero despertar junto a ti cada mañana, quiero que tu cepillo esté junto al mío, quiero que volvamos de algún lado y estemos juntos en la tranquilidad de nuestro hogar, quiero construir ese nidito de amor donde ambos nos sintamos amados, comprendidos y felices 🥰🥰🥰.
+
+Gracias por estos dos años, mi culicagadita hermosa. Gracias por creer en nosotros, por no soltarme, por permitirme estar a tu lado y por hacerme el hombre más feliz del universo. Me has enseñado que el amor verdadero no se ve tanto en los días perfectos, sino en cómo decidimos quedarnos cuando las cosas se complican. Y yo decido quedarme contigo, una y otra vez, porque no existe ningún lugar en este universo donde prefiera estar que a tu lado ❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️.
+
+Te amo inmensamente, con cada parte de mí, y sé que este amor seguirá creciendo porque no paro de amarte ni creo que deje de hacerlo. Feliz segundo aniversario, mi amorcito único y especial. Que estos dos años sean solo el comienzo de una historia que durará toda la vida. Te amo más que ayer, pero menos que mañana 🌹🌹🌹. Besitos y abracitos infinitos, llenos de todo mi más grande cariño, mi dulce corazoncito de melocotón ❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️.`,
+    signature: "— Tu amorcito que tanto te ama 😍😍😍😍😍😍😍😍😍😍😍😍😍😍❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️😘😘😘😘😘😘😘😘😘😘😘"
+  }
+};
+
+/* ============================================================
+   A partir de aquí es lógica del programa. No necesitas
+   editar nada más abajo para que funcione con tu contenido.
+   ============================================================ */
+
+let warmth = 0;
+function setWarmth(v){
+  warmth = v;
+  document.documentElement.style.setProperty('--warmth', v);
+  // El cambio de tema (oscuro -> cálido/papel) es un interruptor de
+  // dos estados: solo se activa al llegar al 100% (etapa final), para
+  // que el texto nunca pierda contraste contra el fondo a mitad de camino.
+  document.body.classList.toggle('theme-warm', v >= 0.999);
+}
+
+function setProgress(pct){
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = 'sistema: ' + pct + '%';
+}
+
+function showStage(id){
+  document.querySelectorAll('.stage').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+// ---------- ETAPA 0 ----------
+function bootSequence(){
+  const el = document.getElementById('bootLines');
+  const lines = CONTENT.bootLines;
+  let li = 0, ci = 0;
+  el.innerHTML = '<span class="cursor"></span>';
+
+  function typeNext(){
+    if(li >= lines.length){
+      document.getElementById('startBtn').classList.remove('hidden');
+      return;
+    }
+    const current = lines[li];
+    if(ci <= current.length){
+      const printedText = current.slice(0, ci);
+      const done = lines.slice(0, li).join('\n');
+      el.innerHTML = (done ? done + '\n' : '') + printedText + '<span class="cursor"></span>';
+
+      // ----------------------------------------------------
+      // VELOCIDAD ESTÁNDAR + PAUSA DRAMÁTICA
+      // ----------------------------------------------------
+      let speed = 50; // Velocidad normal para todas las líneas
+
+      // Si acaba de escribir "80%" en la segunda línea, congela 3 segundos (3000ms)
+      if (li === 1 && printedText.endsWith('75%')) {
+        speed = 3000;
+      }
+
+      ci++;
+      setTimeout(typeNext, speed);
+    } else {
+      li++; ci = 0;
+      setTimeout(typeNext, 200);
+    }
+  }
+  typeNext();
+}
+bootSequence();
+setProgress(5);
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  setProgress(20);
+  showStage('cipher');
+  initCipher();
+});
+
+// ---------- ETAPA 1: CIFRADO ----------
+function caesarEncode(str, shift){
+  return str.split('').map(ch => {
+    if(/[a-z]/.test(ch)){
+      const code = ((ch.charCodeAt(0) - 97 + shift) % 26 + 26) % 26;
+      return String.fromCharCode(code + 97);
+    }
+    return ch;
+  }).join('');
+}
+function normalize(str){
+  return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+}
+function initCipher(){
+  const c = CONTENT.cipher;
+  document.getElementById('encodedText').textContent = caesarEncode(c.phrase, c.shift);
+  document.getElementById('hintBtn').addEventListener('click', () => {
+    document.getElementById('cipherFeedback').textContent = c.hint;
+  });
+  document.getElementById('checkBtn').addEventListener('click', checkCipher);
+  document.getElementById('answerInput').addEventListener('keydown', e => {
+    if(e.key === 'Enter') checkCipher();
+  });
+  function checkCipher(){
+    const val = normalize(document.getElementById('answerInput').value);
+    if(val === normalize(c.phrase)){
+      document.getElementById('cipherFeedback').textContent = 'Correcto. desbloqueando siguiente etapa...';
+      setWarmth(0.15);
+      setProgress(45);
+      setTimeout(() => { showStage('slider'); initSlider(); }, 900);
+    } else {
+      document.getElementById('cipherFeedback').textContent = 'Aún no. intenta de nuevo.';
+    }
+  }
+}
+
+// ---------- ETAPA 2: PUZZLE DESLIZANTE (NxN, arma una foto) ----------
+let puzzleState = [];
+let emptyIndex = 0;
+let PUZZLE_SIZE = 5;
+let puzzleHelpTimeout = null;
+let movesAfterHelp = 0;   // Cuenta los movimientos
+let helpIsActive = false; // Bandera para saber cuándo empezar a contar
+
+function lerpColor(hexA, hexB, t){
+  const a = hexA.match(/\w\w/g).map(h => parseInt(h,16));
+  const b = hexB.match(/\w\w/g).map(h => parseInt(h,16));
+  const c = a.map((v,i) => Math.round(v + (b[i]-v) * t));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+function initSlider(){
+  const s = CONTENT.slider;
+  PUZZLE_SIZE = s.size || 5;
+  const total = PUZZLE_SIZE * PUZZLE_SIZE;
+  puzzleState = Array.from({length: total}, (_, i) => i);
+  emptyIndex = total - 1;
+
+  // Reiniciar contadores de ayuda
+  movesAfterHelp = 0;
+  helpIsActive = false;
+  document.getElementById('solveBtn').classList.add('hidden');
+
+  document.getElementById('puzzleGrid').style.gridTemplateColumns = `repeat(${PUZZLE_SIZE}, 1fr)`;
+
+  // shuffle con movimientos válidos para garantizar que sea resoluble
+  for(let i=0;i<PUZZLE_SIZE*PUZZLE_SIZE*40;i++){
+    const moves = validMoves(emptyIndex);
+    const m = moves[Math.floor(Math.random()*moves.length)];
+    swapTiles(m, emptyIndex);
+    emptyIndex = m;
+  }
+  renderPuzzle();
+
+  const helpBtn = document.getElementById('puzzleHelpBtn');
+  const guideBox = document.getElementById('puzzleGuideBox');
+  const guideImg = document.getElementById('puzzleGuideImg');
+  const solveBtn = document.getElementById('solveBtn');
+
+  helpBtn.classList.add('hidden');
+  guideBox.classList.add('hidden');
+  helpBtn.textContent = 'Mostrar imagen guía';
+
+  if(s.imageUrl) {
+    guideImg.src = s.imageUrl;
+
+    puzzleHelpTimeout = setTimeout(() => {
+      helpBtn.classList.remove('hidden');
+      helpIsActive = true; // A partir de aquí se empiezan a contar los 30 movimientos
+    }, 30000);
+
+    helpBtn.onclick = () => {
+      if (guideBox.classList.contains('hidden')) {
+        guideBox.classList.remove('hidden');
+        helpBtn.textContent = 'Ocultar imagen guía';
+      } else {
+        guideBox.classList.add('hidden');
+        helpBtn.textContent = 'Mostrar imagen guía';
+      }
+    };
+  }
+
+// Lógica del botón "solucionar"
+  solveBtn.onclick = () => {
+    if (confirm("¿Segurísima que quieres resolverlo?")) {
+      const secret = prompt('para continuar ingrese "Soy Daniela Arboleda Trejos alias machete, confirmo que odio a mi novio y es lo peor que me ha pasado y además soy muy gay porque no pude resolver este puzzle que mi novio me hizo con tanto amor"');
+
+      if (secret === "Soy Daniela Arboleda Trejos alias machete, confirmo que odio a mi novio y es lo peor que me ha pasado y además soy muy gay porque no pude resolver este puzzle que mi novio me hizo con tanto amor") {
+        // Ordenar el estado del puzzle matemáticamente
+        puzzleState = Array.from({length: total}, (_, i) => i);
+        emptyIndex = total - 1;
+        renderPuzzle();
+
+        // Mensaje especial con estilo de "celebración"
+        const feedbackEl = document.getElementById('sliderFeedback');
+        feedbackEl.textContent = 'Aunque me acabes de demostrar que eres súperrrr gaaaaaaaayyyyy, no puedo negar el hecho de que TE AMO INMENSAMENTE, HASTA EL INFINITO Y MÁS ALLÁ, CON TODO MI CORAZONCITO!!!';
+        feedbackEl.classList.add('feedback-celebrate');
+
+        solveBtn.classList.add('hidden');
+        helpBtn.classList.add('hidden');
+        guideBox.classList.add('hidden');
+        if (puzzleHelpTimeout) clearTimeout(puzzleHelpTimeout);
+
+        // Transición de 10 segundos a la siguiente etapa
+        setWarmth(0.35);
+        setProgress(70);
+        setTimeout(() => { showStage('constellation'); initConstellation(); }, 12000);
+      }
+    }
+  };
+}
+
+function validMoves(idx){
+  const row = Math.floor(idx/PUZZLE_SIZE), col = idx%PUZZLE_SIZE;
+  const moves = [];
+  if(row>0) moves.push(idx-PUZZLE_SIZE);
+  if(row<PUZZLE_SIZE-1) moves.push(idx+PUZZLE_SIZE);
+  if(col>0) moves.push(idx-1);
+  if(col<PUZZLE_SIZE-1) moves.push(idx+1);
+  return moves;
+}
+function swapTiles(a,b){
+  const tmp = puzzleState[a];
+  puzzleState[a] = puzzleState[b];
+  puzzleState[b] = tmp;
+}
+function renderPuzzle(){
+  const grid = document.getElementById('puzzleGrid');
+  grid.innerHTML = '';
+  const s = CONTENT.slider;
+  const total = PUZZLE_SIZE * PUZZLE_SIZE;
+  const [gA, gB, gC] = s.fallbackGradient || ['#a9d0c8','#e6c17e','#e0959b'];
+
+  puzzleState.forEach((val, idx) => {
+    const tile = document.createElement('div');
+    if(val === total - 1){
+      tile.className = 'tile empty';
+    } else {
+      tile.className = 'tile';
+      const row = Math.floor(val / PUZZLE_SIZE), col = val % PUZZLE_SIZE;
+      if(s.imageUrl){
+        // recorte real de la foto: se agranda N veces y se posiciona según la pieza
+        tile.style.backgroundImage = `url(${s.imageUrl})`;
+        tile.style.backgroundSize = `${PUZZLE_SIZE * 100}% ${PUZZLE_SIZE * 100}%`;
+        tile.style.backgroundPosition = `${(col/(PUZZLE_SIZE-1))*100}% ${(row/(PUZZLE_SIZE-1))*100}%`;
+      } else {
+        // sin foto todavía: un degradado que también se arma pieza por pieza
+        const t = (row + col) / (2 * (PUZZLE_SIZE - 1));
+        const color = t < 0.5 ? lerpColor(gA, gB, t*2) : lerpColor(gB, gC, (t-0.5)*2);
+        tile.style.background = color;
+      }
+      tile.addEventListener('click', () => tryMove(idx));
+    }
+    grid.appendChild(tile);
+  });
+}
+function tryMove(idx){
+  if(validMoves(emptyIndex).includes(idx)){
+    swapTiles(idx, emptyIndex);
+    emptyIndex = idx;
+    renderPuzzle();
+
+    // Contar los movimientos si la ayuda ya apareció
+    if (helpIsActive) {
+      movesAfterHelp++;
+      if (movesAfterHelp >= 30) {
+        document.getElementById('solveBtn').classList.remove('hidden');
+      }
+    }
+
+    if(puzzleState.every((v,i) => v === i)){
+      document.getElementById('sliderFeedback').textContent = 'armado. desbloqueando siguiente etapa...';
+
+      // Limpiar temporizadores y botones en caso de que gane legalmente
+      if (puzzleHelpTimeout) clearTimeout(puzzleHelpTimeout);
+      document.getElementById('puzzleHelpBtn').classList.add('hidden');
+      document.getElementById('puzzleGuideBox').classList.add('hidden');
+      document.getElementById('solveBtn').classList.add('hidden');
+
+      setWarmth(0.35);
+      setProgress(70);
+      setTimeout(() => { showStage('constellation'); initConstellation(); }, 900);
+    }
+  }
+}
+
+// ---------- ETAPA 3: CONSTELACIÓN ----------
+let openedMemories = new Set();
+let constellationRAF = null;
+function initConstellation(){
+  const canvas = document.getElementById('constellationCanvas');
+  const ctx = canvas.getContext('2d');
+  const memories = CONTENT.memories;
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2;
+  const radius = Math.min(W,H) * 0.32;
+
+  const nodes = memories.map((m, i) => {
+    const angle = (i / memories.length) * Math.PI * 2 - Math.PI/2;
+    return {
+      x: cx + radius * Math.cos(angle),
+      y: cy + radius * Math.sin(angle),
+      baseX: cx + radius * Math.cos(angle),
+      baseY: cy + radius * Math.sin(angle),
+      label: m.label,
+      index: i,
+      floatOffset: Math.random() * Math.PI * 2
+    };
+  });
+
+  // campo de estrellas de fondo — puramente decorativo
+  const stars = Array.from({length: 70}, () => ({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    r: Math.random() * 1.2 + 0.3,
+    phase: Math.random() * Math.PI * 2,
+    speed: 0.4 + Math.random() * 0.6
+  }));
+
+  let hoveredIndex = -1;
+  document.getElementById('constCounter').textContent = `0 / ${memories.length} recuerdos abiertos`;
+
+  function lineGradient(x1,y1,x2,y2, opened){
+    const g = ctx.createLinearGradient(x1,y1,x2,y2);
+    if(opened){
+      g.addColorStop(0, 'rgba(230,193,126,0.55)');
+      g.addColorStop(1, 'rgba(224,149,155,0.55)');
+    } else {
+      g.addColorStop(0, 'rgba(230,193,126,0.22)');
+      g.addColorStop(1, 'rgba(169,208,200,0.18)');
+    }
+    return g;
+  }
+
+  function draw(t){
+    ctx.clearRect(0,0,W,H);
+
+    // fondo degradado sutil
+    const bg = ctx.createRadialGradient(cx,cy,10, cx,cy, Math.max(W,H)*0.7);
+    bg.addColorStop(0, 'rgba(27,32,41,1)');
+    bg.addColorStop(1, 'rgba(16,19,27,1)');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0,0,W,H);
+
+    // estrellas titilando
+    stars.forEach(s => {
+      const tw = 0.35 + 0.65 * (0.5 + 0.5*Math.sin(t*0.001*s.speed + s.phase));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(200,215,220,${tw*0.5})`;
+      ctx.fill();
+    });
+
+    // posiciones con leve flotación
+    nodes.forEach(n => {
+      n.x = n.baseX + Math.sin(t*0.0007 + n.floatOffset) * 5;
+      n.y = n.baseY + Math.cos(t*0.0006 + n.floatOffset) * 5;
+    });
+
+    // líneas: radios + anillo exterior
+    ctx.lineWidth = 1.3;
+    for(let i=0;i<nodes.length;i++){
+      const next = nodes[(i+1)%nodes.length];
+      const opened = openedMemories.has(i) && openedMemories.has(next.index);
+      ctx.strokeStyle = lineGradient(nodes[i].x, nodes[i].y, next.x, next.y, opened);
+      ctx.beginPath();
+      ctx.moveTo(nodes[i].x, nodes[i].y);
+      ctx.lineTo(next.x, next.y);
+      ctx.stroke();
+
+      const radialOpened = openedMemories.has(i);
+      ctx.strokeStyle = lineGradient(cx, cy, nodes[i].x, nodes[i].y, radialOpened);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(nodes[i].x, nodes[i].y);
+      ctx.stroke();
+    }
+
+    // pulso viajero sobre cada radio abierto (sensación de energía transmitida)
+    openedMemories.forEach(i => {
+      const n = nodes[i];
+      const prog = (t*0.0006 + i*0.37) % 1;
+      const px = cx + (n.x - cx) * prog;
+      const py = cy + (n.y - cy) * prog;
+      ctx.beginPath();
+      ctx.arc(px, py, 2.4, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(230,193,126,0.9)';
+      ctx.shadowColor = 'rgba(230,193,126,0.9)';
+      ctx.shadowBlur = 8;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    });
+
+    // nodo central: pulso suave
+    const centralPulse = 22 + Math.sin(t*0.0018) * 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, centralPulse + 8, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(230,193,126,0.12)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, centralPulse, 0, Math.PI*2);
+    const centralGrad = ctx.createRadialGradient(cx-6,cy-6,2, cx,cy,centralPulse);
+    centralGrad.addColorStop(0, '#f4e2b8');
+    centralGrad.addColorStop(1, '#e6c17e');
+    ctx.fillStyle = centralGrad;
+    ctx.shadowColor = 'rgba(230,193,126,0.65)';
+    ctx.shadowBlur = 18;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#10131b';
+    ctx.font = '600 10px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Nosotros', cx, cy);
+
+    // nodos de recuerdos
+    nodes.forEach(n => {
+      const opened = openedMemories.has(n.index);
+      const hovered = hoveredIndex === n.index;
+      const baseR = opened ? 15 : 13;
+      const r = baseR + (hovered ? 3 : 0) + (!opened ? Math.sin(t*0.003 + n.floatOffset) * 1.5 : 0);
+
+      // halo
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r + (hovered ? 10 : 7), 0, Math.PI*2);
+      ctx.fillStyle = opened ? 'rgba(224,149,155,0.18)' : 'rgba(169,208,200,0.16)';
+      ctx.fill();
+
+      // nodo
+      const grad = ctx.createRadialGradient(n.x-4, n.y-4, 1, n.x, n.y, r);
+      if(opened){
+        grad.addColorStop(0, '#eeb0b5');
+        grad.addColorStop(1, '#e0959b');
+      } else {
+        grad.addColorStop(0, '#c7e6df');
+        grad.addColorStop(1, '#a9d0c8');
+      }
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r, 0, Math.PI*2);
+      ctx.fillStyle = grad;
+      ctx.shadowColor = opened ? 'rgba(224,149,155,0.6)' : 'rgba(169,208,200,0.5)';
+      ctx.shadowBlur = hovered ? 16 : 8;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle = '#10131b';
+      ctx.font = '600 10px JetBrains Mono';
+      ctx.fillText(opened ? '✓' : String(n.index+1), n.x, n.y);
+
+      ctx.fillStyle = hovered ? '#f4e2b8' : 'rgba(210,224,228,0.9)';
+      ctx.font = (hovered ? '600 ' : '') + '11px JetBrains Mono';
+      ctx.fillText(n.label, n.x, n.y + r + 16);
+    });
+
+    constellationRAF = requestAnimationFrame(draw);
+  }
+  if(constellationRAF) cancelAnimationFrame(constellationRAF);
+  constellationRAF = requestAnimationFrame(draw);
+
+  function nodeAt(x, y){
+    for(const n of nodes){
+      if(Math.hypot(x - n.x, y - n.y) < 20) return n;
+    }
+    return null;
+  }
+  function toCanvasCoords(e){
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) * (W / rect.width),
+      y: (e.clientY - rect.top) * (H / rect.height)
+    };
+  }
+
+  canvas.addEventListener('mousemove', (e) => {
+    const {x, y} = toCanvasCoords(e);
+    const n = nodeAt(x, y);
+    hoveredIndex = n ? n.index : -1;
+    canvas.style.cursor = n ? 'pointer' : 'default';
+  });
+  canvas.addEventListener('mouseleave', () => { hoveredIndex = -1; });
+
+  canvas.addEventListener('click', (e) => {
+    const {x, y} = toCanvasCoords(e);
+    const n = nodeAt(x, y);
+    if(n) openMemory(n.index);
+  });
+
+  function openMemory(i){
+    openedMemories.add(i);
+    const m = memories[i];
+    document.getElementById('memoryText').textContent = m.text;
+    const photoEl = document.getElementById('memoryPhoto');
+    if(m.photo){
+      photoEl.innerHTML = `<img src="${m.photo}" alt="${m.label}">`;
+    } else {
+      photoEl.textContent = '[ foto: ' + m.label + ' ]';
+    }
+    document.getElementById('memoryCard').classList.remove('hidden');
+    document.getElementById('constCounter').textContent = `${openedMemories.size} / ${memories.length} recuerdos abiertos`;
+    setWarmth(0.35 + 0.3 * (openedMemories.size / memories.length));
+    if(openedMemories.size === memories.length){
+      document.getElementById('finishBtn').classList.remove('hidden');
+    }
+  }
+
+  document.getElementById('closeMemory').addEventListener('click', () => {
+    document.getElementById('memoryCard').classList.add('hidden');
+  });
+}
+
+document.getElementById('finishBtn').addEventListener('click', () => {
+  if(constellationRAF) cancelAnimationFrame(constellationRAF);
+  setWarmth(1);
+  setProgress(100);
+  showStage('final');
+  initFinal();
+});
+
+// ---------- ETAPA 4: FINAL ----------
+function initFinal(){
+  const f = CONTENT.final;
+  document.getElementById('finalHeadline').textContent = f.headline;
+  document.getElementById('finalLetter').textContent = f.letter;
+  document.getElementById('finalSignature').textContent = f.signature;
+  const gallery = document.getElementById('finalGallery');
+  gallery.innerHTML = '';
+  f.gallery.forEach((src, i) => {
+    const frame = document.createElement('div');
+    frame.className = 'frame';
+    if(src){
+      frame.innerHTML = `<img src="${src}" alt="recuerdo ${i+1}">`;
+    } else {
+      frame.textContent = '[ foto ' + (i+1) + ' ]';
+    }
+    gallery.appendChild(frame);
+  });
+}
+</script>
+</body>
+</html>
